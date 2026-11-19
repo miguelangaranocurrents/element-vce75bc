@@ -312,4 +312,37 @@ describe("ActionBarView", () => {
         fireEvent.contextMenu(viewSourceButton);
         expect(onViewSourceClick).toHaveBeenCalledWith(viewSourceButton);
     });
+
+    it("does not let action clicks bubble to the parent element", async () => {
+        const user = userEvent.setup();
+        const onViewInRoomClick = vi.fn();
+        const onParentClick = vi.fn();
+
+        class ActionBarViewModel extends MockViewModel<ActionBarViewSnapshot> implements ActionBarViewActions {
+            public onViewInRoomClick = onViewInRoomClick;
+        }
+
+        const vm = new ActionBarViewModel({
+            actions: [ActionBarAction.ViewInRoom],
+            presentation: "icon",
+            isDownloadEncrypted: false,
+            isDownloadLoading: false,
+            isPinned: false,
+            isQuoteExpanded: false,
+            isThreadReplyAllowed: true,
+        });
+
+        // Mirrors the event tile, which opens the thread on click.
+        render(
+            <div onClick={onParentClick}>
+                <ActionBarView vm={vm} />
+            </div>,
+        );
+
+        const viewInRoomButton = screen.getByRole("button", { name: /view in room/i });
+        await user.click(viewInRoomButton);
+
+        expect(onViewInRoomClick).toHaveBeenCalledWith(viewInRoomButton);
+        expect(onParentClick).not.toHaveBeenCalled();
+    });
 });

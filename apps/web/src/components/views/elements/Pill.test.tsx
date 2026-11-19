@@ -231,6 +231,30 @@ describe("<Pill>", () => {
         });
     });
 
+    describe("when clicking a user pill whose member is not known yet", () => {
+        const unknownUserId = "@unknown:example.com";
+
+        beforeEach(() => {
+            renderPill({
+                room: room1,
+                url: permalinkPrefix + unknownUserId,
+            });
+        });
+
+        it("should dispatch a view user action for the user id and prevent navigation", async () => {
+            const link = renderResult.container.querySelector("a");
+            expect(link).not.toBeNull();
+
+            await userEvent.click(screen.getByText(unknownUserId));
+
+            expect(dis.dispatch).toHaveBeenCalledWith({
+                action: Action.ViewUser,
+                member: expect.objectContaining({ userId: unknownUserId }),
+            });
+            expect(pillParentClickHandler).not.toHaveBeenCalled();
+        });
+    });
+
     it("should render the status emoji for a user with a status", () => {
         // The real hook only returns a status when given a user ID
         vi.mocked(useUserStatus).mockImplementation((userId) =>
